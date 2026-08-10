@@ -17,7 +17,7 @@ only; it never auto-fixes.
 |---|---|---|
 | `watch/`, `runner/`, `tests/` | yes | the tool |
 | `topics/` | no — except `template.md` | what you watch, and your actual current stack |
-| `config/` | no — except `README.md`, `*.example.*` | data inlined into research prompts |
+| `config/` | no — not in the repo at all | data inlined into research prompts |
 | `proposals/` | no — except `.gitkeep` | research output |
 | `docs/plans/` | no | design notes describing the watched stack |
 | `runner/.claude-profile/` | no | OAuth credential symlink, session transcripts, account ids |
@@ -34,15 +34,32 @@ credentials entry is a symlink to `~/.claude/.credentials.json`, never a copy.
 ## Setup
 
 ```bash
-cp topics/template.md topics/my-topic.md          # then edit
-cp config/roster.example.md config/roster.md      # only if a topic uses {{include:}}
+cp topics/template.md topics/my-topic.md    # then edit
 ```
 
-For the machine-refreshed roster (optional):
+That is the whole setup. `config/` and `proposals/` are created only if you need
+them — nothing in the repo ships them.
 
-```bash
-cp config/roster-source.example.json config/roster-source.json   # then fill in sheet id
+### config/ (optional)
+
+Only needed if a topic uses `{{include: config/<file>.md}}`. Create the directory
+and put plain markdown in it; the file is inlined verbatim into the research
+prompt, so write it for the researcher, not for yourself.
+
+The optional roster refresh (`runner/refresh-roster.sh`) renders a Google Sheet
+tab into such a file. It reads `config/roster-source.json`:
+
+```json
+{
+  "sheet_id": "<id from the sheet URL: /spreadsheets/d/<sheet_id>/>",
+  "gid": "<tab id, from #gid=<gid>>",
+  "output": "config/roster.md"
+}
 ```
+
+`output` must sit directly in `config/`, so the rendered file is always covered by
+the gitignore rule. The sheet is fetched over its public CSV export URL — no
+credentials. A sheet that is not link-viewable returns HTML and the run fails loud.
 
 ## How It Works
 

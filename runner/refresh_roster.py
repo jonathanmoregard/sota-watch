@@ -1,8 +1,8 @@
 """CLI: refresh the roster config file from its source Google Sheet.
 
 Which sheet, and where the rendered table lands, come from gitignored
-``config/roster-source.json`` (template: ``config/roster-source.example.json``).
-Nothing here identifies a particular sheet or person.
+``config/roster-source.json`` — see the README. Nothing here identifies a
+particular sheet or person.
 
 Writes only — no git. The rendered file lives under ``config/``, which is
 gitignored by design (see README "Private by design"), so committing it is both
@@ -49,8 +49,9 @@ def load_source(repo_root: Path) -> tuple[str, str, Path]:
     path = repo_root / SOURCE_CONFIG
     if not path.exists():
         raise SystemExit(
-            f"refresh-roster: {SOURCE_CONFIG} not found — "
-            f"cp config/roster-source.example.json {SOURCE_CONFIG} and fill it in"
+            f"refresh-roster: {SOURCE_CONFIG} not found. Create it:\n"
+            '  {"sheet_id": "<id from the sheet URL>", '
+            '"gid": "<tab id>", "output": "config/roster.md"}'
         )
     try:
         cfg = json.loads(path.read_text())

@@ -79,7 +79,9 @@ def test_missing_source_config_is_actionable(
 ):
     (tmp_path / "config").mkdir()
     monkeypatch.setattr(refresh_roster, "REPO_ROOT", tmp_path)
-    with pytest.raises(SystemExit, match="roster-source.example.json"):
+    # config/ is not in the repo at all, so the error must carry the required
+    # JSON shape itself — there is no template file left to point at.
+    with pytest.raises(SystemExit, match=r"(?s)not found.*sheet_id.*gid.*output"):
         refresh_roster.refresh(today=date(2026, 8, 2))
 
 

@@ -10,9 +10,9 @@ Design points:
   refresh is a plain HTTPS GET, deterministic, testable, and free of any AI /
   MCP dependency.
 - **Which sheet is config, not code.** The roster names real people, so the
-  sheet id lives in gitignored ``config/roster-source.json`` (template:
-  ``config/roster-source.example.json``) and is threaded in as an argument.
-  Nothing in this module identifies a particular sheet or person.
+  sheet id lives in gitignored ``config/roster-source.json`` and is threaded in
+  as an argument. Nothing in this module identifies a particular sheet or
+  person.
 - **``REFRESHED_DATE_PLACEHOLDER`` is a literal string in the rendered output**
   — the refresh wrapper substitutes today's date only *after* deciding the
   content actually changed, so an unchanged sheet does not produce a daily

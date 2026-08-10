@@ -14,11 +14,10 @@ __pycache__/
 # account identifiers. run-watch.sh recreates this directory on first run.
 runner/.claude-profile/
 
-# Watchlist config pulled into research prompts via {{include:}}.
-config/*
-!config/README.md
-!config/*.example.md
-!config/*.example.json
+# Watchlist config pulled into research prompts via {{include:}}. Entirely
+# local — the directory is an artefact of one setup, not part of the tool.
+# Format is documented in the README.
+config/
 
 # Topic definitions — "## Current state" describes your actual stack.
 topics/*
