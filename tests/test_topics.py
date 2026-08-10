@@ -57,6 +57,15 @@ def test_due_topics_ordering(tmp_path):
     assert "d" not in names, "disabled topic is never due"
 
 
+def test_template_is_never_due(tmp_path):
+    """topics/template.md is a tracked, valid, never-run topic — it must not
+    consume a research call on a fresh clone."""
+    _write(tmp_path, SAMPLE.replace("2026-06-01", "never"), "template.md")
+    _write(tmp_path, SAMPLE, "real.md")
+    names = [t.name for t in due_topics(tmp_path, today=date(2026, 7, 12))]
+    assert names == ["sample-topic"], "only the real topic is due"
+
+
 def test_mark_run_updates_frontmatter(tmp_path):
     p = _write(tmp_path, SAMPLE)
     mark_run(p, on=date(2026, 7, 12))

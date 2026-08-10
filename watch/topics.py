@@ -46,10 +46,24 @@ def parse_topic(path: Path) -> Topic:
     )
 
 
+TEMPLATE_NAME = "template.md"
+
+
 def due_topics(topics_dir: Path, today: date) -> list[Topic]:
-    """Enabled topics past their cadence, never-run first, then most-overdue first."""
+    """Enabled topics past their cadence, never-run first, then most-overdue first.
+
+    ``template.md`` is skipped by name. It is the one tracked file in this
+    gitignored directory and it parses as a valid never-run topic, so without
+    this guard every fresh clone would spend its first research call on the
+    template. Skipping by name rather than shipping the template with
+    ``enabled: false`` keeps a copied template live immediately — a user who
+    fills one in and forgets to flip a flag would otherwise get silence, which
+    is the exact failure mode this project exists to catch.
+    """
     due = []
     for p in sorted(topics_dir.glob("*.md")):
+        if p.name == TEMPLATE_NAME:
+            continue
         t = parse_topic(p)
         if not t.enabled:
             continue
