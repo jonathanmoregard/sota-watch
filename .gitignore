@@ -1,0 +1,34 @@
+__pycache__/
+.venv/
+.pytest_cache/
+
+# ---------------------------------------------------------------------------
+# Private by design. This repo is the TOOL; the watchlist and its output are
+# local-only data. Everything below stays on the machine that runs the watcher.
+#
+# Each ignored directory ships a committed template so a fresh clone can be
+# set up without guessing the format. See README "Private by design".
+# ---------------------------------------------------------------------------
+
+# Isolated Claude Code profile: OAuth credential symlink, session transcripts,
+# account identifiers. run-watch.sh recreates this directory on first run.
+runner/.claude-profile/
+
+# Watchlist config pulled into research prompts via {{include:}}.
+config/*
+!config/README.md
+!config/*.example.md
+!config/*.example.json
+
+# Topic definitions — "## Current state" describes your actual stack.
+topics/*
+!topics/template.md
+
+# Research output.
+proposals/*
+!proposals/.gitkeep
+
+# Design/planning notes. These describe the stack being watched — repo paths,
+# model pins, architecture, product plans — i.e. the same private data as
+# topics/, just in prose.
+docs/plans/
