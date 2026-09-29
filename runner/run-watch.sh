@@ -49,8 +49,8 @@
 #
 # No --bare:
 #   --bare requires ANTHROPIC_API_KEY and skips OAuth/keychain entirely.
-#   This runner uses the user's existing OAuth session (personal/single-user
-#   cron). Using --bare would break auth. Draft included --bare; dropped.
+#   This runner authenticates with an OAuth token (personal/single-user
+#   cron; see "Auth" below). Using --bare would break auth. Draft included --bare; dropped.
 #   CLAUDE.md auto-discovery is suppressed instead via:
 #     - cd to repo root (not a CLAUDE.md-bearing ancestor directory).
 #     - CLAUDE_CODE_DISABLE_CLAUDE_MDS=1
@@ -69,8 +69,17 @@
 #
 # CLAUDE_CONFIG_DIR isolation:
 #   Points to runner/.claude-profile/ — an empty isolated profile.
-#   Symlink to user credentials is created on first run (see below).
 #   Prevents auto-memory, plugin sync, and stale hook inheritance.
+#
+# Auth: long-lived CLAUDE_CODE_OAUTH_TOKEN, not a shared credentials file.
+#   The profile used to symlink ~/.claude/.credentials.json. Claude Code
+#   rewrites that file atomically on token refresh, which replaces the
+#   symlink with a private copy; OAuth refresh tokens rotate, so the next
+#   refresh by either side left the other with a dead refresh token
+#   ("OAuth session expired and could not be refreshed", 2026-09-27/29).
+#   The token (from `claude setup-token`) is read from CLAUDE_TOKEN_FILE
+#   (default: the agenix secret) at exec time inside the env -i shell, so
+#   it never appears in any process argv. Env token beats stored creds.
 
 set -euo pipefail
 
@@ -80,9 +89,10 @@ PROFILE_DIR="$REPO_ROOT/runner/.claude-profile"
 # Create isolated profile on first run.
 mkdir -p "$PROFILE_DIR"
 
-# Symlink credentials so OAuth token refreshes work from the isolated profile.
-if [ ! -e "$PROFILE_DIR/.credentials.json" ]; then
-  ln -sf "$HOME/.claude/.credentials.json" "$PROFILE_DIR/.credentials.json"
+CLAUDE_TOKEN_FILE="${CLAUDE_TOKEN_FILE:-/run/agenix/claude-token}"
+if [ ! -r "$CLAUDE_TOKEN_FILE" ]; then
+  echo "run-watch: Claude OAuth token not readable at $CLAUDE_TOKEN_FILE" >&2
+  exit 1
 fi
 
 # Minimal settings for isolated profile: dontAsk default, no background tasks.
@@ -169,6 +179,8 @@ for i in "${!MODELS[@]}"; do
     CLAUDE_CODE_DISABLE_CLAUDE_MDS="1" \
     CLAUDE_CODE_DISABLE_AUTO_MEMORY="1" \
     CLAUDE_CODE_DISABLE_BACKGROUND_TASKS="1" \
+    CLAUDE_TOKEN_FILE="$CLAUDE_TOKEN_FILE" \
+    bash -c 'CLAUDE_CODE_OAUTH_TOKEN="$(< "$CLAUDE_TOKEN_FILE")"; export CLAUDE_CODE_OAUTH_TOKEN; unset CLAUDE_TOKEN_FILE; exec "$@"' _ \
     timeout 7200 \
     claude -p "$(cat "$REPO_ROOT/runner/runner-prompt.md")" \
       --model "$MODEL" \

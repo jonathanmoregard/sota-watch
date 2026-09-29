@@ -20,7 +20,7 @@ only; it never auto-fixes.
 | `config/` | no — not in the repo at all | data inlined into research prompts |
 | `proposals/` | no — except `.gitkeep` | research output |
 | `docs/plans/` | no | design notes describing the watched stack |
-| `runner/.claude-profile/` | no | OAuth credential symlink, session transcripts, account ids |
+| `runner/.claude-profile/` | no | session transcripts, account ids |
 
 A topic's `## Current state` section is a written inventory of what you run and
 where — and `config/` files are inlined verbatim into prompts, so they hold whatever
@@ -28,8 +28,12 @@ the research needs to know. That is the sort of thing worth keeping off a public
 remote. Every ignored directory ships a committed template, so a clone is
 self-explanatory without carrying anyone's data.
 
-`runner/.claude-profile/` is recreated by `run-watch.sh` on first run — the
-credentials entry is a symlink to `~/.claude/.credentials.json`, never a copy.
+`runner/.claude-profile/` is recreated by `run-watch.sh` on first run. It holds
+no credentials: the runner authenticates with a long-lived token from
+`claude setup-token`, read at exec time from `$CLAUDE_TOKEN_FILE` (default
+`/run/agenix/claude-token`) and passed as `CLAUDE_CODE_OAUTH_TOKEN`. Sharing
+`~/.claude/.credentials.json` breaks: refresh tokens rotate, so whichever side
+refreshes second is logged out.
 
 ## Setup
 
