@@ -1,0 +1,58 @@
+# Tests + quick security gates on every PR and push to main.
+# Tools come from one pinned nixpkgs revision (the same one research-agent's
+# CI uses), so CI runs the binaries a local review runs. Every step takes
+# seconds (measured locally 2026-10-04).
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NIXPKGS: github:NixOS/nixpkgs/b7c2ada94fe99c15b0dbcf4d11fd7850b957a436
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+      - name: pytest
+        run: nix shell "$NIXPKGS#uv" -c uv run --locked --with pytest pytest -q
+
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+      - name: gitleaks (full history)
+        run: nix shell "$NIXPKGS#gitleaks" -c gitleaks git . --redact --no-banner
+      - name: bandit (high severity + high confidence)
+        run: nix shell "$NIXPKGS#bandit" -c bandit -r watch runner -lll -iii -q
+      - name: shellcheck
+        run: nix shell "$NIXPKGS#shellcheck" -c shellcheck -x runner/refresh-roster.sh runner/run-watch.sh
+      - name: actionlint
+        run: nix shell "$NIXPKGS#actionlint" -c actionlint
+      - name: zizmor
+        run: nix shell "$NIXPKGS#zizmor" -c zizmor --offline .github/workflows
+      # unverified-creator is skipped: it flags any action without the
+      # Marketplace badge, and every action here is pinned to a commit SHA.
+      - name: poutine
+        run: >-
+          nix shell "$NIXPKGS#poutine" -c poutine analyze_local . --fail-on-violation
+          --skip github_action_from_unverified_creator_used

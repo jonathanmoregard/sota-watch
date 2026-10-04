@@ -179,6 +179,7 @@ CLASS=error
 for i in "${!MODELS[@]}"; do
   MODEL="${MODELS[$i]}"
   rc=0
+  # shellcheck disable=SC2016 # the inner bash expands the token file, not this shell
   OUTPUT="$(env -i \
     HOME="$REAL_HOME" \
     USER="$RUN_USER" \
