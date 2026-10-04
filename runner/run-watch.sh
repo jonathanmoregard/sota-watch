@@ -11,14 +11,25 @@
 #   denies close the dangerous surface (web, subagents, skills, edits).
 #
 # --allowedTools layers on top of --tools "":
-#   - Bash(uv run*): scoped to uv run invocations only (due_topics + mark_run).
-#   - Bash(notify-send*): desktop notification on medium/high severity only.
+#   - Bash(uv run python3 -m watch.cli due|prompt topics/*|mark topics/*):
+#     the three helper invocations, exact. NOT a `uv run*` prefix: that
+#     approved `uv run python3 -c <anything>` and `uv run --with <pkg>`,
+#     i.e. arbitrary code from a model whose input includes untrusted
+#     research reports (security review K04, 2026-10-03). watch/cli.py
+#     refuses any topic path that is not an existing topics/<name>.md.
+#     Claude Code itself denies compound commands, $(...) and env-var
+#     prefixes that would smuggle extra code past these exact rules
+#     (measured on 2.1.288).
+#   - Bash(notify-send -u normal *): medium/high severity notification only.
 #   - No git at all: proposals/ and topics/ are gitignored local state, so
 #     there is nothing for the agent to commit. Dropped 2026-08-10 when the
 #     watchlist and its output stopped being tracked (README "Private by
 #     design") — a git-capable agent with nothing to commit is pure surface.
 #   - Read,Glob,Grep: topic file reading and proposal scaffolding.
-#   - Write: proposal file output to proposals/.
+#   - Edit(./proposals/*.md): proposal output only. File-write path rules
+#     are Edit(...) rules (they cover the Write tool). The former bare
+#     `Write` allow let the agent rewrite runner/run-watch.sh and
+#     watch/*.py, the trusted code this wrapper executes on the next run.
 #   - mcp__research-agent__research: the ONE allowed external call.
 #   - ToolSearch: required when MCP tool count is large — lets the agent
 #     load deferred tool schemas without which mcp__research-agent__research
@@ -187,7 +198,7 @@ for i in "${!MODELS[@]}"; do
       --mcp-config "$MCP_CONFIG" \
       --strict-mcp-config \
       --permission-mode dontAsk \
-      --allowedTools "Read,Glob,Grep,Write,ToolSearch,mcp__research-agent__research,mcp__research-agent__retry_research,Bash(uv run*),Bash(notify-send*)" \
+      --allowedTools "Read,Glob,Grep,Edit(./proposals/*.md),ToolSearch,mcp__research-agent__research,mcp__research-agent__retry_research,Bash(uv run python3 -m watch.cli due),Bash(uv run python3 -m watch.cli prompt topics/*),Bash(uv run python3 -m watch.cli mark topics/*),Bash(notify-send -u normal *)" \
       --disallowedTools "WebFetch,WebSearch,Task,Agent,Skill,Edit,NotebookEdit,EnterWorktree,CronCreate" \
       --max-turns 150 \
       --output-format json)" || rc=$?
