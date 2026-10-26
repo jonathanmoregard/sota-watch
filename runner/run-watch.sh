@@ -44,7 +44,7 @@
 # --strict-mcp-config:
 #   Only the server in --mcp-config loads; all user/project MCP inheritance
 #   is suppressed. Prevents unintended tool surface from other MCP servers
-#   (futuresearch, safe-bash, etc.). Draft did not include this; added by skill.
+#   (safe-bash, etc.). Draft did not include this; added by skill.
 #
 # --permission-mode dontAsk:
 #   Auto-denies anything not in the explicit allow list. Never use
